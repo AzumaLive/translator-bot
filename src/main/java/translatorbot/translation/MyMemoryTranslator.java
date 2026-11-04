@@ -61,16 +61,6 @@ public class MyMemoryTranslator implements Translator {
             throw new TranslationException(translatedText);
         }
 
-        return new TranslationResult(text, translatedText, source, target);
-    }
-
-    private static class MyMemoryResponse {
-        ResponseData responseData;
-        int responseStatus;
-        String responseDetails;
-    }
-
-    private static class ResponseData {
-        String translatedText;
+        return new TranslationResult(text, translatedText, source, target, response.responseData.detectedLanguage);
     }
 }

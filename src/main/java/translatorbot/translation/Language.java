@@ -14,7 +14,8 @@ public enum Language {
     TURKISH("tr", "турецкий"),
     UKRAINIAN("uk", "украинский"),
     KAZAKH("kk", "казахский"),
-    RUSSIAN("ru", "русский");
+    RUSSIAN("ru", "русский"),
+    AUTO("Autodetect", "автоопределение");
 
     private final String code;
     private final String russianName;
