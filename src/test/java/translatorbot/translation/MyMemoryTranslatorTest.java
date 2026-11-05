@@ -50,7 +50,7 @@ class MyMemoryTranslatorTest {
 
         TranslationResult result = translator.translate("bonjour", Language.AUTO, Language.ENGLISH);
 
-        assertEquals("fr", result.detectedLanguage());
+        assertEquals(Language.FRENCH, result.detectedLanguage());
     }
 
     @Test

@@ -1,20 +1,34 @@
 package translatorbot.translation;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.util.Optional;
 
 public enum Language {
 
+    @SerializedName("en")
     ENGLISH("en", "английский"),
+    @SerializedName("de")
     GERMAN("de", "немецкий"),
+    @SerializedName("fr")
     FRENCH("fr", "французский"),
+    @SerializedName("es")
     SPANISH("es", "испанский"),
+    @SerializedName("it")
     ITALIAN("it", "итальянский"),
+    @SerializedName("zh-CN")
     CHINESE("zh-CN", "китайский"),
+    @SerializedName("ja")
     JAPANESE("ja", "японский"),
+    @SerializedName("tr")
     TURKISH("tr", "турецкий"),
+    @SerializedName("uk")
     UKRAINIAN("uk", "украинский"),
+    @SerializedName("kk")
     KAZAKH("kk", "казахский"),
+    @SerializedName("ru")
     RUSSIAN("ru", "русский"),
+    @SerializedName("Autodetect")
     AUTO("Autodetect", "автоопределение");
 
     private final String code;

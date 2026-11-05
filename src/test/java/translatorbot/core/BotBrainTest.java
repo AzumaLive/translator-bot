@@ -108,7 +108,7 @@ class BotBrainTest {
     @Test
     void translateAutoShowsDetectedLanguage() {
         brain.handle("/source auto", session);
-        translator.detectedLanguage = "fr";
+        translator.detectedLanguage = Language.FRENCH;
 
         String reply = brain.handle("bonjour", session);
 
@@ -148,7 +148,7 @@ class BotBrainTest {
         String lastText;
         Language lastSource;
         Language lastTarget;
-        String detectedLanguage;
+        Language detectedLanguage;
 
         @Override
         public TranslationResult translate(String text, Language source, Language target) {
