@@ -29,4 +29,10 @@ class LanguageTest {
     void fromNameUnknownReturnsEmpty() {
         assertTrue(Language.fromName("марсианский").isEmpty());
     }
+
+    @Test
+    void autoIsRecognized() {
+        assertEquals(Language.AUTO, Language.fromCode("Autodetect").orElseThrow());
+        assertEquals(Language.AUTO, Language.fromName("автоопределение").orElseThrow());
+    }
 }

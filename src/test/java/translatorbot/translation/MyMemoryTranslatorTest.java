@@ -36,6 +36,24 @@ class MyMemoryTranslatorTest {
     }
 
     @Test
+    void buildsUrlWithAutoDetect() {
+        gateway.response = OK_JSON;
+
+        translator.translate("hello", Language.AUTO, Language.ENGLISH);
+
+        assertTrue(gateway.lastUrl.contains("langpair=Autodetect%7Cen"));
+    }
+
+    @Test
+    void parsesDetectedLanguage() {
+        gateway.response = "{\"responseData\":{\"translatedText\":\"hello\",\"detectedLanguage\":\"fr\"},\"responseStatus\":200}";
+
+        TranslationResult result = translator.translate("bonjour", Language.AUTO, Language.ENGLISH);
+
+        assertEquals(Language.FRENCH, result.detectedLanguage());
+    }
+
+    @Test
     void throwsOnErrorStatus() {
         gateway.response = "{\"responseStatus\":403,\"responseDetails\":\"INVALID SOURCE LANGUAGE\"}";
 

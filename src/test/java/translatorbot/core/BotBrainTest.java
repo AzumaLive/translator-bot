@@ -72,6 +72,51 @@ class BotBrainTest {
     }
 
     @Test
+    void sourceSetsSourceLanguage() {
+        String reply = brain.handle("/source de", session);
+
+        assertEquals(Language.GERMAN, session.getSourceLanguage());
+        assertTrue(reply.contains("немецкий"));
+    }
+
+    @Test
+    void sourceAutoEnablesAutoDetect() {
+        String reply = brain.handle("/source auto", session);
+
+        assertEquals(Language.AUTO, session.getSourceLanguage());
+        assertTrue(reply.contains("Автоопределение"));
+    }
+
+    @Test
+    void sourceWithoutArgumentShowsCurrent() {
+        String reply = brain.handle("/source", session);
+
+        assertTrue(reply.contains("русский"));
+        assertTrue(reply.contains("auto"));
+    }
+
+    @Test
+    void translateUsesSelectedSource() {
+        brain.handle("/source it", session);
+
+        String reply = brain.handle("привет", session);
+
+        assertEquals(Language.ITALIAN, translator.lastSource);
+        assertEquals("[en]привет", reply);
+    }
+
+    @Test
+    void translateAutoShowsDetectedLanguage() {
+        brain.handle("/source auto", session);
+        translator.detectedLanguage = Language.FRENCH;
+
+        String reply = brain.handle("bonjour", session);
+
+        assertEquals(Language.AUTO, translator.lastSource);
+        assertTrue(reply.contains("fr"));
+    }
+
+    @Test
     void translateUsesRussianAsSourceAndSelectedTarget() {
         brain.handle("/lang it", session);
 
@@ -103,13 +148,14 @@ class BotBrainTest {
         String lastText;
         Language lastSource;
         Language lastTarget;
+        Language detectedLanguage;
 
         @Override
         public TranslationResult translate(String text, Language source, Language target) {
             this.lastText = text;
             this.lastSource = source;
             this.lastTarget = target;
-            return new TranslationResult(text, "[" + target.getCode() + "]" + text, source, target);
+            return new TranslationResult(text, "[" + target.getCode() + "]" + text, source, target, detectedLanguage);
         }
     }
 }
