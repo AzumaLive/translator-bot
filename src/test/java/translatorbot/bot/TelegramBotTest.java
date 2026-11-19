@@ -2,6 +2,7 @@ package translatorbot.bot;
 
 import org.junit.jupiter.api.Test;
 import translatorbot.core.BotBrain;
+import translatorbot.dictionary.InMemoryDictionaryStorage;
 import translatorbot.translation.HttpGateway;
 import translatorbot.translation.Language;
 import translatorbot.translation.TranslationResult;
@@ -80,6 +81,20 @@ class TelegramBotTest {
         assertEquals(1, gateway.urls.size());
         assertTrue(gateway.urls.getFirst().contains("sendMessage"));
         assertTrue(gateway.urls.getFirst().contains("chat_id=42"));
+    }
+
+    @Test
+    void savesDictionaryPerChatInProvidedStorage() {
+        FakeGateway gateway = new FakeGateway();
+        InMemoryDictionaryStorage storage = new InMemoryDictionaryStorage();
+        TelegramBot bot = new TelegramBot("token", gateway, new BotBrain(new EchoTranslator()), storage);
+
+        bot.handleUpdate(new TelegramBot.IncomingUpdate(1, 42L, "привет"));
+        bot.handleUpdate(new TelegramBot.IncomingUpdate(2, 42L, "/save"));
+
+        assertEquals(1, storage.load(42L).size());
+        assertEquals("привет", storage.load(42L).getFirst().originalText());
+        assertTrue(storage.load(99L).isEmpty());
     }
 
     private static class FakeGateway implements HttpGateway {

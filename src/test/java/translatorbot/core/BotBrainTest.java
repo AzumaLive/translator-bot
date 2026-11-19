@@ -2,6 +2,8 @@ package translatorbot.core;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import translatorbot.dictionary.DictionaryEntry;
+import translatorbot.dictionary.InMemoryDictionaryStorage;
 import translatorbot.translation.Language;
 import translatorbot.translation.TranslationResult;
 import translatorbot.translation.Translator;
@@ -142,6 +144,131 @@ class BotBrainTest {
     void unknownCommandShowsHelpHint() {
         String reply = brain.handle("/blabla", session);
         assertTrue(reply.contains("/help"));
+    }
+
+    @Test
+    void helpListsDictionaryCommands() {
+        String reply = brain.handle("/help", session);
+
+        assertTrue(reply.contains("/save"));
+        assertTrue(reply.contains("/dictionary"));
+        assertTrue(reply.contains("/delete"));
+    }
+
+    @Test
+    void saveWithoutTranslationExplainsWhatToDo() {
+        String reply = brain.handle("/save", session);
+
+        assertTrue(reply.contains("/save"));
+        assertTrue(session.getDictionary().isEmpty());
+    }
+
+    @Test
+    void saveStoresLastTranslation() {
+        brain.handle("привет", session);
+
+        String reply = brain.handle("/save", session);
+
+        assertTrue(reply.contains("Сохранено"));
+        assertTrue(reply.contains("привет"));
+        assertEquals(1, session.getDictionary().getAll().size());
+    }
+
+    @Test
+    void saveDoesNotDuplicateEntry() {
+        brain.handle("привет", session);
+        brain.handle("/save", session);
+
+        String reply = brain.handle("/save", session);
+
+        assertTrue(reply.contains("уже есть"));
+        assertEquals(1, session.getDictionary().getAll().size());
+    }
+
+    @Test
+    void dictionaryShowsSavedEntries() {
+        brain.handle("привет", session);
+        brain.handle("/save", session);
+
+        String reply = brain.handle("/dictionary", session);
+
+        assertTrue(reply.contains("1. привет"));
+        assertTrue(reply.contains("ru → en"));
+    }
+
+    @Test
+    void dictionaryIsEmptyAtStart() {
+        String reply = brain.handle("/dictionary", session);
+
+        assertTrue(reply.contains("пуст"));
+    }
+
+    @Test
+    void deleteRemovesEntryByNumber() {
+        brain.handle("привет", session);
+        brain.handle("/save", session);
+        brain.handle("пока", session);
+        brain.handle("/save", session);
+
+        String reply = brain.handle("/delete 1", session);
+
+        assertTrue(reply.contains("удалена"));
+        assertEquals(1, session.getDictionary().getAll().size());
+        assertTrue(session.getDictionary().getAll().getFirst().originalText().equals("пока"));
+    }
+
+    @Test
+    void deleteRejectsInvalidNumber() {
+        brain.handle("привет", session);
+        brain.handle("/save", session);
+
+        String reply = brain.handle("/delete 5", session);
+
+        assertTrue(reply.contains("нет"));
+        assertEquals(1, session.getDictionary().getAll().size());
+    }
+
+    @Test
+    void deleteRejectsNonNumericArgument() {
+        brain.handle("привет", session);
+        brain.handle("/save", session);
+
+        String reply = brain.handle("/delete abc", session);
+
+        assertTrue(reply.contains("номер"));
+        assertEquals(1, session.getDictionary().getAll().size());
+    }
+
+    @Test
+    void deleteOnEmptyDictionaryExplainsWhy() {
+        String reply = brain.handle("/delete 1", session);
+
+        assertTrue(reply.contains("пуст"));
+    }
+
+    @Test
+    void savedEntryUsesDetectedLanguageForAutoSource() {
+        brain.handle("/source auto", session);
+        translator.detectedLanguage = Language.FRENCH;
+
+        brain.handle("bonjour", session);
+        brain.handle("/save", session);
+
+        String reply = brain.handle("/dictionary", session);
+        assertTrue(reply.contains("fr → en"));
+    }
+
+    @Test
+    void dictionarySurvivesNewSessionWithSameStorage() {
+        InMemoryDictionaryStorage storage = new InMemoryDictionaryStorage();
+        UserSession first = new UserSession(storage, 42L);
+        first.setLastTranslation(new DictionaryEntry("кот", "cat", Language.RUSSIAN, Language.ENGLISH));
+        brain.handle("/save", first);
+
+        UserSession second = new UserSession(storage, 42L);
+
+        assertEquals(1, second.getDictionary().getAll().size());
+        assertEquals("кот", second.getDictionary().getAll().getFirst().originalText());
     }
 
     private static class FakeTranslator implements Translator {
