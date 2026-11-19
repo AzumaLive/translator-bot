@@ -4,6 +4,8 @@ import translatorbot.bot.ConsoleBot;
 import translatorbot.bot.TelegramBot;
 import translatorbot.config.Config;
 import translatorbot.core.BotBrain;
+import translatorbot.dictionary.DictionaryStorage;
+import translatorbot.dictionary.InMemoryDictionaryStorage;
 import translatorbot.translation.JavaNetHttpGateway;
 import translatorbot.translation.MyMemoryTranslator;
 import translatorbot.translation.Translator;
@@ -13,11 +15,12 @@ public class Main {
     public static void main(String[] args) {
         Translator translator = new MyMemoryTranslator(new JavaNetHttpGateway());
         BotBrain brain = new BotBrain(translator);
+        DictionaryStorage dictionaryStorage = new InMemoryDictionaryStorage();
 
         String mode = args.length > 0 ? args[0] : "console";
         switch (mode) {
-            case "console" -> new ConsoleBot(brain).run();
-            case "telegram" -> runTelegram(brain);
+            case "console" -> new ConsoleBot(brain, dictionaryStorage).run();
+            case "telegram" -> runTelegram(brain, dictionaryStorage);
             default -> {
                 System.err.println("Неизвестный режим: " + mode + ". Используйте console или telegram.");
                 System.exit(1);
@@ -25,13 +28,13 @@ public class Main {
         }
     }
 
-    private static void runTelegram(BotBrain brain) {
+    private static void runTelegram(BotBrain brain, DictionaryStorage dictionaryStorage) {
         String token = new Config().getTelegramToken();
         if (token == null || token.isBlank()) {
             throw new IllegalStateException("Задайте токен в config.properties (telegram.bot.token)");
         }
 
-        TelegramBot bot = new TelegramBot(token, new JavaNetHttpGateway(), brain);
+        TelegramBot bot = new TelegramBot(token, new JavaNetHttpGateway(), brain, dictionaryStorage);
         bot.run();
     }
 }

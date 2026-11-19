@@ -3,6 +3,7 @@ package translatorbot.bot;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import translatorbot.core.BotBrain;
+import translatorbot.dictionary.InMemoryDictionaryStorage;
 import translatorbot.translation.Language;
 import translatorbot.translation.TranslationResult;
 import translatorbot.translation.Translator;
@@ -61,10 +62,44 @@ class ConsoleBotTest {
         assertFalse(output.contains("/lang"));
     }
 
+    @Test
+    void savesAndShowsDictionaryEntry() {
+        runBot("привет\n/save\n/dictionary\n/exit\n");
+
+        String output = output();
+        assertTrue(output.contains("Сохранено"));
+        assertTrue(output.contains("1. привет"));
+    }
+
+    @Test
+    void deleteRemovesEntry() {
+        runBot("привет\n/save\n/delete 1\n/dictionary\n/exit\n");
+
+        String output = output();
+        assertTrue(output.contains("Запись удалена"));
+        assertTrue(output.contains("Словарик пуст"));
+    }
+
+    @Test
+    void dictionarySurvivesRestart() {
+        InMemoryDictionaryStorage storage = new InMemoryDictionaryStorage();
+        runBot(storage, "кот\n/save\n/exit\n");
+
+        out.reset();
+        runBot(storage, "/dictionary\n/exit\n");
+
+        String output = output();
+        assertTrue(output.contains("1. кот"));
+    }
+
     private void runBot(String input) {
+        runBot(new InMemoryDictionaryStorage(), input);
+    }
+
+    private void runBot(InMemoryDictionaryStorage storage, String input) {
         ByteArrayInputStream in = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
         PrintStream ps = new PrintStream(out, true, StandardCharsets.UTF_8);
-        new ConsoleBot(brain, in, ps).run();
+        new ConsoleBot(brain, storage, in, ps).run();
     }
 
     private String output() {

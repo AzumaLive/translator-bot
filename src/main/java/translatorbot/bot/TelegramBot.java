@@ -6,6 +6,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import translatorbot.core.BotBrain;
 import translatorbot.core.UserSession;
+import translatorbot.dictionary.DictionaryStorage;
+import translatorbot.dictionary.InMemoryDictionaryStorage;
 import translatorbot.translation.HttpGateway;
 
 import java.io.IOException;
@@ -24,12 +26,18 @@ public class TelegramBot implements Bot {
     private final String token;
     private final HttpGateway gateway;
     private final BotBrain brain;
+    private final DictionaryStorage dictionaryStorage;
     private final Map<Long, UserSession> sessions = new ConcurrentHashMap<>();
 
     public TelegramBot(String token, HttpGateway gateway, BotBrain brain) {
+        this(token, gateway, brain, new InMemoryDictionaryStorage());
+    }
+
+    public TelegramBot(String token, HttpGateway gateway, BotBrain brain, DictionaryStorage dictionaryStorage) {
         this.token = token;
         this.gateway = gateway;
         this.brain = brain;
+        this.dictionaryStorage = dictionaryStorage;
     }
 
     @Override
@@ -89,7 +97,8 @@ public class TelegramBot implements Bot {
         if (update.chatId() == null || update.text() == null) {
             return;
         }
-        UserSession session = sessions.computeIfAbsent(update.chatId(), id -> new UserSession());
+        UserSession session = sessions.computeIfAbsent(
+                update.chatId(), id -> new UserSession(dictionaryStorage, id));
         String reply = brain.handle(update.text(), session);
         try {
             gateway.get(buildSendMessageUrl(update.chatId(), reply));

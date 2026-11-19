@@ -2,6 +2,8 @@ package translatorbot.bot;
 
 import translatorbot.core.BotBrain;
 import translatorbot.core.UserSession;
+import translatorbot.dictionary.DictionaryStorage;
+import translatorbot.dictionary.InMemoryDictionaryStorage;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -14,22 +16,32 @@ import java.nio.charset.StandardCharsets;
 public class ConsoleBot implements Bot {
 
     private final BotBrain brain;
+    private final DictionaryStorage dictionaryStorage;
     private final InputStream input;
     private final PrintStream output;
 
     public ConsoleBot(BotBrain brain) {
-        this(brain, System.in, System.out);
+        this(brain, new InMemoryDictionaryStorage(), System.in, System.out);
+    }
+
+    public ConsoleBot(BotBrain brain, DictionaryStorage dictionaryStorage) {
+        this(brain, dictionaryStorage, System.in, System.out);
     }
 
     public ConsoleBot(BotBrain brain, InputStream input, PrintStream output) {
+        this(brain, new InMemoryDictionaryStorage(), input, output);
+    }
+
+    public ConsoleBot(BotBrain brain, DictionaryStorage dictionaryStorage, InputStream input, PrintStream output) {
         this.brain = brain;
+        this.dictionaryStorage = dictionaryStorage;
         this.input = input;
         this.output = output;
     }
 
     @Override
     public void run() {
-        UserSession session = new UserSession();
+        UserSession session = new UserSession(dictionaryStorage, 0L);
         output.println(brain.handle("/start", session));
         output.println();
 
